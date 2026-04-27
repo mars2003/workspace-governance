@@ -67,11 +67,13 @@ For each platform, identify:
 2. Platform-native directories (immutable, never touch)
 3. Cache locations (unified or separate, based on platform constraints)
 
+Platform mapping examples (not exhaustive):
+
 | Platform | Workspace Root (default candidate) | Immutable Dirs |
 |----------|----------------|----------------|
 | Hermes | `~/.hermes/` | `hermes-agent/`, `bin/`, `cron/`, `sessions/`, `logs/` |
 | Claude Code | `~/.claude/` | `.claude/`, `.cache/` |
-| OpenClaw | `~/` | (none by default; detect dynamically) |
+| Generic/Unknown | `~/` | auto-detect agent/runtime dirs |
 
 If platform is unknown:
 - Auto-detect immutable directories by heuristics (agent/runtime/system dirs)
@@ -88,18 +90,8 @@ Default `{WORKSPACE_ROOT}` priority (keep it simple):
 
 ```yaml
 SKILL_ADAPT:
-  platform: hermes
-  workspace_root: ~/.hermes/workspace
-  immutable_dirs:
-    - hermes-agent/
-    - bin/
-    - cron/
-    - sessions/
-    - logs/
-  cache_dirs:
-    - cache/
-    - audio_cache/
-    - image_cache/
+  workspace_root: <user-defined-path>
+  immutable_dirs: [dir1, dir2]
   cache_policy: separate # separate | consolidate
 ```
 
@@ -172,20 +164,11 @@ Trigger: "create project xxx" / "new project"
 
 1. Convert project name to kebab-case
 2. Create directory under `{WORKSPACE_ROOT}/active/`
-3. Create `README.md`:
-
-   ```markdown
-   # {Project Name}
-
-   **Status**: active
-   **Created**: {YYYY-MM-DD}
-
-   ## Purpose
-   {brief description, from user or left blank}
-
-   ## Key Files
-   - (to be added)
-   ```
+3. Create `README.md` with:
+   - project name
+   - status (`active`)
+   - created date (`YYYY-MM-DD`)
+   - brief purpose
 
 4. Tell user: all project files go in `{WORKSPACE_ROOT}/active/{project-name}/`, temp outputs go in `{WORKSPACE_ROOT}/tmp/`
 
@@ -309,16 +292,10 @@ Delete older backups automatically. Only config files get backups — not data, 
 ### Cache Consolidation
 
 When multiple cache directories exist (for example `cache/`, `audio_cache/`, `image_cache/`):
-- Before suggesting consolidation, run quick dependency checks:
-  - If config files or scripts explicitly reference current cache paths, mark as `non-consolidatable`
-  - If platform docs/runtime require fixed cache paths, keep `separate`
-  - Only suggest `consolidate` when no explicit references and no platform constraints are found
-- If platform policy is `consolidate`, suggest merging into `cache/` with subdirs:
-  - `cache/audio/`
-  - `cache/image/`
-  - `cache/misc/`
-- If platform policy is `separate`, keep current directories and apply expiration checks per directory
-- Never force consolidation when platform requires fixed cache paths
+- Default to `separate` (do not merge automatically)
+- Suggest consolidation only when user requests it and both checks pass:
+  - no explicit path references in configs/scripts
+  - no platform/runtime fixed-path requirement
 
 ## Safety
 
