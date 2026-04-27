@@ -78,6 +78,12 @@ If platform is unknown:
 - Show detected result to user before any move/delete operations
 - Ask user to confirm `{WORKSPACE_ROOT}`
 
+Default `{WORKSPACE_ROOT}` priority (keep it simple):
+1. User explicitly provided path
+2. Current project/repo root (if inside a repo)
+3. Platform recommended workspace path
+4. User home fallback
+
 ### SKILL_ADAPT Block (per-platform override)
 
 ```yaml
@@ -280,6 +286,14 @@ Output format:
 - Summary: "Found N issues, suggested fixes:" + fix plan table
 - Execute fixes after user confirms
 
+Lightweight check methods (reference, keep platform-neutral):
+- Root file type check: list root entries and match against allow/forbid rules
+- Cache expiry check: detect files older than 7 days in each cache dir
+- Backup count check: group by config basename and ensure max 3 backups
+- Naming check: match against bad-name patterns (`test`, `temp`, `untitled`, non-ASCII dirs)
+- Build artifact check: detect known artifact dirs/files from the list below
+- Active project README check: verify each `active/*/README.md` exists and contains `Status: active`
+
 ## Classification Rules
 
 ### Allowed in Root
@@ -345,6 +359,10 @@ Delete older backups automatically. Only config files get backups — not data, 
 ### Cache Consolidation
 
 When multiple cache directories exist (for example `cache/`, `audio_cache/`, `image_cache/`):
+- Before suggesting consolidation, run quick dependency checks:
+  - If config files or scripts explicitly reference current cache paths, mark as `non-consolidatable`
+  - If platform docs/runtime require fixed cache paths, keep `separate`
+  - Only suggest `consolidate` when no explicit references and no platform constraints are found
 - If platform policy is `consolidate`, suggest merging into `cache/` with subdirs:
   - `cache/audio/`
   - `cache/image/`
