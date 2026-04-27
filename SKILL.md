@@ -25,22 +25,26 @@ Workspaces accumulate clutter over time: stray files in root, expired temp files
 
 ## Directory Structure
 
-Standard layout, using `<home>` as the workspace root:
+This skill separates **platform directories** from **workspace directories**.
+
+Use `<home>` as the host root, but only reorganize inside `{WORKSPACE_ROOT}`.
 
 ```
 <home>/
-├── active/              # Projects currently in development
-├── skills/              # Reusable skill files
-├── memory/              # Agent persistent state (notes, logs)
-├── docs/                # User documents, articles, references
-├── scripts/             # Global utility scripts (shared across projects)
-├── assets/              # Active resources (images, audio, PPT, PDF)
-├── archives/            # Cold storage
-│   ├── projects/        # Completed or abandoned projects
-│   └── assets/          # Retired resource files
-├── cache/               # Temporary cache (auto-expire, ≤7 days)
-├── tmp/                 # Scratch space (delete when task is done)
-└── [config files]       # .env, *.yaml, *.json, etc.
+├── {PLATFORM_DIRS}/     # Auto-detected, immutable, never move/delete
+├── {WORKSPACE_ROOT}/    # Reorganizable scope for this skill
+│   ├── active/              # Projects currently in development
+│   ├── skills/              # Reusable skill files
+│   ├── memory/              # Agent persistent state (notes, logs)
+│   ├── docs/                # User documents, articles, references
+│   ├── scripts/             # Global utility scripts (shared across projects)
+│   ├── assets/              # Active resources (images, audio, PPT, PDF)
+│   ├── archives/            # Cold storage
+│   │   ├── projects/        # Completed or abandoned projects
+│   │   └── assets/          # Retired resource files
+│   ├── cache/               # Temporary cache (auto-expire, ≤7 days)
+│   ├── tmp/                 # Scratch space (delete when task is done)
+│   └── [config files]       # .env, *.yaml, *.json, etc.
 ```
 
 **Routing rules**:
@@ -49,9 +53,125 @@ Standard layout, using `<home>` as the workspace root:
 - Non-text resources (images, audio, video, PPT, PDF) → `assets/`
 - Active development → `active/<project-name>/`
 - Finished or abandoned work → `archives/projects/`
+- Platform-native files/directories → leave as-is (never suggest moving)
 - Uncertain → list options for user to decide; never assume
 
 Only create directories as needed. Do not scaffold empty directories on first run.
+
+## Platform Adaptation
+
+Detect the current platform before running any flow.
+
+For each platform, identify:
+1. Workspace root (where rules apply)
+2. Platform-native directories (immutable, never touch)
+3. Cache locations (unified or separate, based on platform constraints)
+
+| Platform | Workspace Root | Immutable Dirs |
+|----------|----------------|----------------|
+| Hermes | `~/.hermes/` | `hermes-agent/`, `bin/`, `cron/`, `sessions/`, `logs/` |
+| Claude Code | `~/.claude/` | `.claude/`, `.cache/` |
+| OpenClaw | `~/` | (none by default; detect dynamically) |
+
+If platform is unknown:
+- Auto-detect immutable directories by heuristics (agent/runtime/system dirs)
+- Show detected result to user before any move/delete operations
+- Ask user to confirm `{WORKSPACE_ROOT}`
+
+### SKILL_ADAPT Block (per-platform override)
+
+```yaml
+SKILL_ADAPT:
+  platform: hermes
+  workspace_root: ~/.hermes/workspace
+  immutable_dirs:
+    - hermes-agent/
+    - bin/
+    - cron/
+    - sessions/
+    - logs/
+  cache_dirs:
+    - cache/
+    - audio_cache/
+    - image_cache/
+  cache_policy: separate # separate | consolidate
+```
+
+### Platform Detection Decision Tree (reference)
+
+Use the following order to avoid false positives and accidental moves:
+
+1. If `SKILL_ADAPT` is explicitly provided by user/project:
+   - Use `workspace_root`, `immutable_dirs`, `cache_dirs`, `cache_policy` directly
+2. Else try known platform signatures:
+   - Hermes: `~/.hermes/` exists or dirs like `hermes-agent/`, `cron/`, `sessions/`
+   - Claude Code: `~/.claude/` exists or dirs like `.claude/`
+   - OpenClaw/Generic: fallback to user home or current repo root
+3. Derive immutable dirs:
+   - Start with platform defaults
+   - Add safety-critical dirs (`.git/`, keys/certs, agent config dirs)
+4. Derive cache dirs:
+   - Collect existing cache-like dirs (`cache/`, `*_cache/`, `.cache/`)
+   - Apply platform requirement first; then apply `cache_policy`
+5. Show detection summary and ask for confirmation before any destructive action
+
+### Platform Detection Pseudocode (reference)
+
+```python
+def detect_platform_context(input_hint=None):
+    ctx = {
+        "platform": "unknown",
+        "workspace_root": None,
+        "immutable_dirs": set(),
+        "cache_dirs": [],
+        "cache_policy": "separate",
+    }
+
+    adapt = load_skill_adapt_if_any(input_hint)
+    if adapt:
+        ctx["platform"] = adapt.get("platform", "custom")
+        ctx["workspace_root"] = expand(adapt["workspace_root"])
+        ctx["immutable_dirs"].update(adapt.get("immutable_dirs", []))
+        ctx["cache_dirs"] = adapt.get("cache_dirs", [])
+        ctx["cache_policy"] = adapt.get("cache_policy", "separate")
+        return ctx
+
+    if exists("~/.hermes/") or has_dirs(["hermes-agent", "cron", "sessions"]):
+        ctx["platform"] = "hermes"
+        ctx["workspace_root"] = choose_existing([
+            "~/.hermes/workspace", "~/.hermes/"
+        ])
+        ctx["immutable_dirs"].update([
+            "hermes-agent/", "bin/", "cron/", "sessions/", "logs/"
+        ])
+        ctx["cache_dirs"] = existing_dirs(["cache/", "audio_cache/", "image_cache/"])
+        ctx["cache_policy"] = "separate"
+    elif exists("~/.claude/") or has_dirs([".claude"]):
+        ctx["platform"] = "claude-code"
+        ctx["workspace_root"] = "~/.claude/"
+        ctx["immutable_dirs"].update([".claude/", ".cache/"])
+        ctx["cache_dirs"] = existing_dirs(["cache/", ".cache/"])
+        ctx["cache_policy"] = "separate"
+    else:
+        ctx["platform"] = "generic"
+        ctx["workspace_root"] = detect_repo_or_home()
+        ctx["immutable_dirs"].update(detect_agent_runtime_dirs())
+        ctx["cache_dirs"] = detect_cache_dirs(ctx["workspace_root"])
+        ctx["cache_policy"] = "separate"
+
+    ctx["immutable_dirs"].update(global_protected_paths())
+    return ctx
+```
+
+Detection output template (show before execution):
+
+| Key | Value |
+|-----|-------|
+| Platform | `{platform}` |
+| Workspace Root | `{workspace_root}` |
+| Immutable Dirs | `{immutable_dirs}` |
+| Cache Dirs | `{cache_dirs}` |
+| Cache Policy | `{cache_policy}` |
 
 ## Flows
 
@@ -65,9 +185,10 @@ Execute the matching flow based on user intent.
 
 Trigger: "organize" / "tidy up" / "clean up" / "messy"
 
-1. Scan root directory with `bash ls -la` and `glob`
-2. Classify each file per the Classification Rules below
-3. Build a plan table:
+1. Run platform detection (resolve `{WORKSPACE_ROOT}` and immutable dirs)
+2. Scan `{WORKSPACE_ROOT}` with `bash ls -la` and `glob` (skip immutable dirs)
+3. Classify each file per the Classification Rules below
+4. Build a plan table:
 
    | File | Current | Target | Action | Reason |
    |------|---------|--------|--------|--------|
@@ -75,12 +196,12 @@ Trigger: "organize" / "tidy up" / "clean up" / "messy"
    | \_\_pycache\_\_/ | root | — | delete | build artifact |
    | test.py | root | — | ask user | ambiguous name |
 
-4. Present plan, wait for confirmation
+5. Present plan, wait for confirmation
    - User approves → execute
    - User excludes items → update plan, re-confirm
-5. Execute with `bash mv` / `bash rm -rf`
-6. Report results: moved N, deleted M, skipped K
-7. Append summary to `memory/workspace-log.md`:
+6. Execute with `bash mv` / `bash rm -rf`
+7. Report results: moved N, deleted M, skipped K
+8. Append summary to `memory/workspace-log.md`:
    ```
    ## {YYYY-MM-DD} Organize
    - Moved N files, deleted M, skipped K
@@ -94,7 +215,7 @@ Trigger: "organize" / "tidy up" / "clean up" / "messy"
 Trigger: "create project xxx" / "new project"
 
 1. Convert project name to kebab-case
-2. Create directory under `active/`
+2. Create directory under `{WORKSPACE_ROOT}/active/`
 3. Create `README.md`:
 
    ```markdown
@@ -110,7 +231,7 @@ Trigger: "create project xxx" / "new project"
    - (to be added)
    ```
 
-4. Tell user: all project files go in `active/{project-name}/`, temp outputs go in `tmp/`
+4. Tell user: all project files go in `{WORKSPACE_ROOT}/active/{project-name}/`, temp outputs go in `{WORKSPACE_ROOT}/tmp/`
 
 ---
 
@@ -118,12 +239,12 @@ Trigger: "create project xxx" / "new project"
 
 Trigger: "archive xxx" / "done with xxx" / "project xxx is finished"
 
-1. Locate project directory with `glob` (usually under `active/`)
+1. Locate project directory with `glob` (usually under `{WORKSPACE_ROOT}/active/`)
    - Not found → ask user to confirm name and location
 2. Build archive plan:
-   - Deliverables → move to `assets/` (if user wants)
-   - Project directory → move to `archives/projects/{project-name}/`
-   - Related `tmp/`, `cache/` files → delete
+   - Deliverables → move to `{WORKSPACE_ROOT}/assets/` (if user wants)
+   - Project directory → move to `{WORKSPACE_ROOT}/archives/projects/{project-name}/`
+   - Related `{WORKSPACE_ROOT}/tmp/`, cache files → delete
    - Build artifacts (`node_modules/`, `__pycache__/`, etc.) → delete
 3. Update README.md: status → "archived", add archive date
 4. Present plan, execute after user confirms
@@ -131,7 +252,7 @@ Trigger: "archive xxx" / "done with xxx" / "project xxx is finished"
    ```
    ## {YYYY-MM-DD} Archive
    - Project: {project-name}
-   - Archived to: archives/projects/{project-name}/
+   - Archived to: {WORKSPACE_ROOT}/archives/projects/{project-name}/
    - Cleaned: {deleted temp files and build artifacts}
    ```
 
@@ -144,13 +265,13 @@ Trigger: "check" / "cleanup" / "audit"
 Scan and report:
 
 ```
-□ Root contains only config files and directories
-□ No forbidden file types in root (images, docs, scripts)
-□ No files older than 7 days in cache/
+□ `{WORKSPACE_ROOT}` root contains only config files and directories
+□ No forbidden file types in `{WORKSPACE_ROOT}` root (images, docs, scripts)
+□ No files older than 7 days in cache dirs (or unified `cache/`)
 □ Backup count per config file ≤ 3
 □ No bad names (test.py, temp, untitled, non-ASCII directory names)
 □ No leftover build artifacts (__pycache__/, node_modules/)
-□ Every project in active/ has README.md with status = active
+□ Every project in `{WORKSPACE_ROOT}/active/` has README.md with status = active
 □ No empty directories
 ```
 
@@ -177,6 +298,12 @@ Output format:
 | Scripts (py/sh/js/ts) | `scripts/` (global) or `active/{project}/` (project-specific) |
 | Temp files (*.tmp/*.temp/*.log) | `tmp/` or delete |
 | Build artifacts | delete |
+
+### Scope Rule
+
+All classification/move/delete rules apply to `{WORKSPACE_ROOT}` only.
+
+Never classify, move, rename, or delete files inside `{PLATFORM_DIRS}`.
 
 ### Naming Convention
 
@@ -214,6 +341,16 @@ config.yaml.bak.1     (two versions ago)
 ```
 
 Delete older backups automatically. Only config files get backups — not data, not projects.
+
+### Cache Consolidation
+
+When multiple cache directories exist (for example `cache/`, `audio_cache/`, `image_cache/`):
+- If platform policy is `consolidate`, suggest merging into `cache/` with subdirs:
+  - `cache/audio/`
+  - `cache/image/`
+  - `cache/misc/`
+- If platform policy is `separate`, keep current directories and apply expiration checks per directory
+- Never force consolidation when platform requires fixed cache paths
 
 ## Safety
 
