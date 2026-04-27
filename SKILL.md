@@ -1,377 +1,256 @@
-# workspace-organizer
+---
+name: workspace-organizer
+description: >
+  Organize workspace files, clean up clutter, archive finished projects,
+  and enforce directory structure. Triggers on "organize", "tidy up",
+  "cleanup", "archive project", "create project", "messy workspace".
+  Also triggers on Chinese: "整理工作区", "清理文件", "归档项目",
+  "太乱了", "帮我整理一下", "创建项目".
+---
 
-A universal skill to keep your agent's workspace clean and organized. Works with OpenClaw, Hermes, Claude Code, Cursor, or any AI agent platform.
+# Workspace Organizer
 
-## The Problem
+Automated workspace hygiene for AI agents.
 
-Agents create files constantly — scripts, images, reports, temporary outputs. Without rules, the workspace becomes a mess:
-- Root directory filled with random files
-- Duplicate directories scattered around
-- Old projects never archived
-- Backup files pile up indefinitely
-- Naming chaos (`test1.py`, `Untitled`, non-ASCII names)
-- Build artifacts (`node_modules/`, `__pycache__/`) cluttering the workspace
+## Overview
 
-## Core Principles
+Workspaces accumulate clutter over time: stray files in root, expired temp files, unarchived projects, chaotic naming. This skill provides rules and executable flows to keep the workspace clean.
 
-```
-Root = Entrypoint, Not Storage
-Every file belongs somewhere
-Projects have beginnings and ends
-Naming is communication, not reminder
-Cache is ephemeral, assets are persistent
-```
+## When to Use
 
-## Directory Structure (Default Template)
+- "organize my workspace" / "tidy up" / "cleanup"
+- "archive project xxx" / "done with xxx"
+- "create project xxx"
+- "workspace check" / "too messy"
 
-Apply this structure to your platform's home directory. Adapt directory names to match your platform's conventions, but keep the organizational logic.
+## Directory Structure
+
+Standard layout, using `<home>` as the workspace root:
 
 ```
 <home>/
-├── skills/              # Reusable capabilities (agent knows how to do)
-├── active/              # Active projects (currently in use)
-├── memory/              # Persistent memory files (agent's notes, user prefs)
-├── docs/                # Documentation, articles, references
+├── active/              # Projects currently in development
+├── skills/              # Reusable skill files
+├── memory/              # Agent persistent state (notes, logs)
+├── docs/                # User documents, articles, references
 ├── scripts/             # Global utility scripts (shared across projects)
-├── archives/            # Finished or abandoned work
-│   ├── projects/       # Archived projects (by project name)
-│   ├── by-date/        # Chronological archive (YYYY-MM/ or YYYY/)
-│   └── assets/         # Old images, audio, documents
-├── assets/             # Active resources (images, audio, documents, downloads)
-├── cache/              # Temporary files (auto-cleanup, ≤7 days)
-├── tmp/                # Ephemeral work files (deleted when done)
-└── [bootstrap files]   # Config, identity, system files
+├── assets/              # Active resources (images, audio, PPT, PDF)
+├── archives/            # Cold storage
+│   ├── projects/        # Completed or abandoned projects
+│   └── assets/          # Retired resource files
+├── cache/               # Temporary cache (auto-expire, ≤7 days)
+├── tmp/                 # Scratch space (delete when task is done)
+└── [config files]       # .env, *.yaml, *.json, etc.
 ```
 
-**Logic:**
-- `skills/` — things the agent can do (reusable capabilities)
-- `active/` — projects currently being developed or used
-- `memory/` — agent's persistent state (not project data)
-- `archives/projects/` — completed or abandoned projects (out of active use)
-- `cache/` — temporary files with automatic expiration
-- `tmp/` — scratch space for active work
-- Root — only config, bootstrap, and identity files
+**Routing rules**:
+- Agent's own state/notes → `memory/` (not project data)
+- User-authored articles, references → `docs/`
+- Non-text resources (images, audio, video, PPT, PDF) → `assets/`
+- Active development → `active/<project-name>/`
+- Finished or abandoned work → `archives/projects/`
+- Uncertain → list options for user to decide; never assume
 
-## The Rules
+Only create directories as needed. Do not scaffold empty directories on first run.
 
-### Rule 1: Root Directory Is Sacred
+## Flows
 
-**Allowed in root:**
-- Configuration files (`*.md`, `.env`, `.json`, `.yaml`, `.toml`, `.ini`)
-- Directory entries (folders)
-- Bootstrap/identity files (platform-specific)
-- README, LICENSE, CHANGELOG
+Execute the matching flow based on user intent.
 
-**Forbidden in root:**
-- Images, audio, video files
-- Documents (PPT, PDF, DOC, XLSX)
-- Scripts unless globally shared
-- Temporary or test outputs
-- Backup files
-- Build artifacts
-- Non-text files
+**Safety rule: all move/delete operations must be shown as a plan table first. Execute only after user confirms.**
 
-**If a file appears in root:** Move it to the appropriate directory immediately.
+---
 
-### Rule 2: Naming Convention
+### Flow A: Organize Workspace
 
-**Directories:**
-- Lowercase, hyphens, English only
-- Semantic and descriptive
-- ✅ `work-notes`, `image-generator`, `weekly-reports`, `project-alpha`
-- ❌ `temp`, `新建文件夹`, `aaa`, `stuff`, `misc`
+Trigger: "organize" / "tidy up" / "clean up" / "messy"
 
-**Files:**
-- Semantic name + version/date when useful
-- Include extension (always)
-- Platform-safe characters only (ASCII alphanumerics, `-`, `_`, `.`)
-- ✅ `market-analysis-2026-04.md`, `feishu-voice-sender.py`, `config-v2.yaml`
-- ❌ `1.py`, `test.py`, `output_final.pptx`, `新建文件`, `report@latest.docx`
+1. Scan root directory with `bash ls -la` and `glob`
+2. Classify each file per the Classification Rules below
+3. Build a plan table:
 
-**Never use in names:**
-- Spaces, special characters, emoji
-- `test`, `temp`, `untitled`, `copy`, `backup` as primary identifiers
-- Date formats other than `YYYY-MM-DD` or `YYYYMMDD`
+   | File | Current | Target | Action | Reason |
+   |------|---------|--------|--------|--------|
+   | image.png | root | assets/ | move | non-text resource |
+   | \_\_pycache\_\_/ | root | — | delete | build artifact |
+   | test.py | root | — | ask user | ambiguous name |
 
-### Rule 3: Project Lifecycle
+4. Present plan, wait for confirmation
+   - User approves → execute
+   - User excludes items → update plan, re-confirm
+5. Execute with `bash mv` / `bash rm -rf`
+6. Report results: moved N, deleted M, skipped K
+7. Append summary to `memory/workspace-log.md`:
+   ```
+   ## {YYYY-MM-DD} Organize
+   - Moved N files, deleted M, skipped K
+   - Key changes: {brief list}
+   ```
 
-```
-Create → Develop → Complete → Archive
-        or
-Create → Develop → Abandon → Archive
-```
+---
 
-**Create:**
-```
-1. Create a dedicated directory under active/
-2. Add README.md with: purpose, status, key files
-3. All project files stay inside until complete
-```
+### Flow B: Create Project
 
-**Develop:**
-```
-1. All files in active/<project-name>/
-2. Temporary outputs to /tmp/ or cache/, never to home root
-3. Build artifacts (__pycache__/, node_modules/) are temporary by default
-```
+Trigger: "create project xxx" / "new project"
 
-**Complete:**
-```
-1. Deliverables to assets/ or keep in project
-2. Move project to archives/projects/<project-name>/
-3. Clean: /tmp/, cache/, build artifacts (unless user says keep)
-4. Update README.md status to "archived"
-```
+1. Convert project name to kebab-case
+2. Create directory under `active/`
+3. Create `README.md`:
 
-**Abandon:**
-```
-1. Move entire project to archives/projects/
-2. Mark README.md status as "abandoned"
-3. Do not leave orphaned files scattered
-```
+   ```markdown
+   # {Project Name}
 
-### Rule 4: Asset Management
+   **Status**: active
+   **Created**: {YYYY-MM-DD}
 
-| File Type | Primary Location | Archive Location |
-|-----------|-----------------|-----------------|
-| Images | `assets/` | `archives/assets/` |
-| Audio/Video | `assets/` | `archives/assets/` |
-| Documents (PPT, PDF) | `assets/` | `archives/assets/` |
-| Downloads | `assets/downloads/` | `archives/assets/` |
-| Temporary outputs | `cache/` or `/tmp/` | — (delete) |
-| Build artifacts | — (delete) | never archive |
+   ## Purpose
+   {brief description, from user or left blank}
 
-### Rule 5: Backup Discipline
+   ## Key Files
+   - (to be added)
+   ```
 
-```
-Maximum 3 backups per config file:
-  config.yaml           (current)
-  config.yaml.bak       (1 version ago)
-  config.yaml.bak.1     (2 versions ago)
+4. Tell user: all project files go in `active/{project-name}/`, temp outputs go in `tmp/`
 
-Delete config.yaml.bak.2 and older automatically.
-```
+---
 
-**Backup rules:**
-- Only config files get backups (not data, not projects)
-- Use timestamp if needed: `config-2026-04-27.yaml`
-- Never backup `node_modules/`, `cache/`, `/tmp/`
+### Flow C: Archive Project
 
-### Rule 6: Cache & Temp Management
+Trigger: "archive xxx" / "done with xxx" / "project xxx is finished"
+
+1. Locate project directory with `glob` (usually under `active/`)
+   - Not found → ask user to confirm name and location
+2. Build archive plan:
+   - Deliverables → move to `assets/` (if user wants)
+   - Project directory → move to `archives/projects/{project-name}/`
+   - Related `tmp/`, `cache/` files → delete
+   - Build artifacts (`node_modules/`, `__pycache__/`, etc.) → delete
+3. Update README.md: status → "archived", add archive date
+4. Present plan, execute after user confirms
+5. Append record to `memory/workspace-log.md`:
+   ```
+   ## {YYYY-MM-DD} Archive
+   - Project: {project-name}
+   - Archived to: archives/projects/{project-name}/
+   - Cleaned: {deleted temp files and build artifacts}
+   ```
+
+---
+
+### Flow D: Hygiene Check
+
+Trigger: "check" / "cleanup" / "audit"
+
+Scan and report:
 
 ```
-Cache lifecycle: ≤ 7 days
-Temp lifecycle: until task complete
-
-Detection:
-  - Directories named: cache/, tmp/, temp/, .cache/
-  - File patterns: *.tmp, *.temp, *.cache
-  - System temp: /tmp/, /var/tmp/
-
-Cleanup trigger:
-  - On startup (low priority)
-  - After project completion
-  - When storage exceeds threshold
-```
-
-### Rule 7: Build Artifacts — Delete by Default
-
-**Default: delete immediately**
-```
-- node_modules/
-- __pycache__/
-- *.pyc, *.pyo
-- .pytest_cache/
-- dist/, build/, *.egg-info/
-- .venv/, venv/, env/
-- .parcel-cache/, .next/, .nuxt/
-```
-
-**Exception: keep if user explicitly requests**
-```
-Some deployment scenarios need node_modules/ preserved.
-If user says "keep node_modules for deployment", respect it.
-Otherwise: always delete, never archive.
-```
-
-**Never archive:**
-- Build artifacts are output, not source
-- They can be recreated from source/requirements
-
-### Rule 8: Forbidden Patterns
-
-**Files that should never exist:**
-```
-- /tmp/ with non-temporary names
-- Files with non-ASCII characters in path
-- Symbolic links pointing to active work (allowed in archives)
-- Files older than 30 days in cache/
-- Empty directories (delete if found)
-```
-
-### Rule 9: Softlinks
-
-```
-Allowed:
-  - In archives/ only (for organizing by-date links)
-  - Pointing to external storage
-
-Forbidden:
-  - In root, skills/, apps/, memory/, assets/
-  - Pointing to /tmp/ or cache/
-  - Circular links
-```
-
-## Weekly Hygiene Check
-
-Run this checklist regularly (or when user says "organize"):
-
-```
-□ Root has only config/directory files
-□ No forbidden file types in root
-□ System temp (/tmp/) is clean
-□ cache/ files are ≤ 7 days old
-□ Backup count per config ≤ 3
-□ No non-ASCII directory/file names
-□ No test.py, temp.py, untitled files
-□ No build artifacts (__pycache__/, node_modules/)
-□ All projects have README.md with status
-□ archives/ organized (by-name or by-date)
+□ Root contains only config files and directories
+□ No forbidden file types in root (images, docs, scripts)
+□ No files older than 7 days in cache/
+□ Backup count per config file ≤ 3
+□ No bad names (test.py, temp, untitled, non-ASCII directory names)
+□ No leftover build artifacts (__pycache__/, node_modules/)
+□ Every project in active/ has README.md with status = active
 □ No empty directories
-□ No symbolic links outside archives/
 ```
 
-**If violations found:** Fix immediately. Log to memory. Ask user if uncertain.
+Output format:
+- Pass items → ✅, violations → ❌ with fix suggestion
+- Summary: "Found N issues, suggested fixes:" + fix plan table
+- Execute fixes after user confirms
 
-## Quick Reference
+## Classification Rules
+
+### Allowed in Root
+
+- Config files: `.env`, `*.yaml`, `*.toml`, `*.json`, `*.ini`, `*.conf`
+- Special markdown: `README.md`, `LICENSE`, `CHANGELOG.md`
+- Directories
+
+### Forbidden in Root (move on sight)
+
+| File Type | Target |
+|-----------|--------|
+| Images (png/jpg/gif/svg/webp/ico) | `assets/` |
+| Audio/Video (mp3/mp4/wav/avi/mov) | `assets/` |
+| Documents (ppt/pptx/pdf/doc/docx/xlsx/xls) | `assets/` or `docs/` |
+| Scripts (py/sh/js/ts) | `scripts/` (global) or `active/{project}/` (project-specific) |
+| Temp files (*.tmp/*.temp/*.log) | `tmp/` or delete |
+| Build artifacts | delete |
+
+### Naming Convention
+
+**Directories**: lowercase English, hyphens, semantic
+- ✅ `market-analysis`, `weekly-reports`, `image-generator`
+- ❌ `temp`, `aaa`, `stuff`, `misc`
+
+**Files**: semantic name + extension, ASCII only (letters, digits, `-`, `_`, `.`)
+- ✅ `market-analysis-2026-04.md`, `config-v2.yaml`
+- ❌ `1.py`, `test.py`, `report@latest.docx`
+
+**Dates**: `YYYY-MM-DD` or `YYYYMMDD` only
+
+When encountering bad names, suggest a new name for user to confirm. Never rename silently.
+
+### Build Artifacts (delete by default)
 
 ```
-USER SAYS "organize"
-  → Run hygiene check
-  → Sort files by type
-  → Move to appropriate directories
-  → Create archives/ if missing
-  → Delete build artifacts
-  → Report what was done
-
-USER SAYS "create project <name>"
-  → Create <home>/projects/<name>/
-  → Add README.md (purpose, status: active)
-  → All files stay inside
-
-USER SAYS "done with <project>"
-  → Move deliverables to assets/
-  → Move project to archives/projects/
-  → Clean: /tmp/, cache/, build artifacts
-  → Update README.md status: archived
-
-USER SAYS "write article / save notes"
-  → docs/ for articles and documentation
-  → memory/ for agent's own notes
-  → Use semantic filename with date
-
-USER SAYS "cleanup"
-  → Delete build artifacts
-  → Clear cache/ older than 7 days
-  → Remove empty directories
-  → Verify backup count ≤ 3
+node_modules/, __pycache__/, *.pyc, *.pyo
+.pytest_cache/, dist/, build/, *.egg-info/
+.venv/, venv/, env/
+.parcel-cache/, .next/, .nuxt/
 ```
 
-## Platform Detection
+Exception: keep if user explicitly says so.
 
-Your agent should detect the home directory automatically:
+### Backup Discipline
 
-```python
-import os
+Max 3 backup versions per config file:
 
-def find_home():
-    candidates = [
-        os.environ.get('WORKSPACE'),
-        os.environ.get('AGENT_HOME'),
-        os.environ.get('HERMES_HOME'),
-        os.environ.get('HOME'),
-        os.environ.get('AGENT_ROOT'),
-        os.path.expanduser('~'),
-    ]
-    for candidate in candidates:
-        if candidate and os.path.isdir(candidate):
-            return candidate
-    return os.getcwd()
+```
+config.yaml           (current)
+config.yaml.bak       (previous)
+config.yaml.bak.1     (two versions ago)
 ```
 
-## Examples
+Delete older backups automatically. Only config files get backups — not data, not projects.
 
-### Example 1: A Messy Root
+## Safety
 
-**Before:**
+### Protected Paths (never touch)
+
 ```
-<home>/
-├── test.py
-├── notes.txt
-├── image.png
-├── report.pptx
-├── backup.json.bak
-├── backup.json.bak.1
-├── backup.json.bak.2
-├── backup.json.bak.3
-├── node_modules/
-└── __pycache__/
+.git/, .svn/, .hg/              # Version control
+.env                             # Environment variables (check location, don't move)
+*.key, *.pem, *.p12             # Certificates and keys
+Agent config directories         # e.g. .claude/, .cursor/, platform-specific dirs
 ```
 
-**After:**
-```
-<home>/
-├── scripts/
-│   └── test.py
-├── assets/
-│   ├── image.png
-│   └── report.pptx
-├── memory/
-│   └── notes.txt
-├── cache/
-└── ...
-```
-Deleted: node_modules/, __pycache__/, extra backups
+Skip these during scans. Never suggest moving or deleting them.
 
-### Example 2: Creating a New Capability
+### Dry-run First
 
-**User:** "Create a stock screener capability"
+All destructive operations must show a plan first:
+- Format: table with file / action / reason
+- Execute only after user confirms
+- If user excludes items, update plan and re-confirm
 
-**Agent:**
-```
-1. mkdir active/stock-screener/
-2. Add README.md (purpose, usage, status: active)
-3. All files stay inside until stable
-4. When complete: mv to archives/projects/
-```
+### Name Collision
 
-### Example 3: Archiving a Finished Project
+When moving a file to a location that already has the same name:
+- Append date suffix: `image.png` → `image-20260427.png`
+- Never overwrite existing files
 
-**User:** "The market analysis project is complete"
+### Error Handling
 
-**Agent:**
-```
-1. Move deliverables to assets/
-2. mv projects/market-analysis/ archives/projects/
-3. Update archives/projects/market-analysis/README.md (status: archived)
-4. rm -rf /tmp/market-analysis-*
-5. Done
-```
+- Auto-create target directory if missing (`mkdir -p`)
+- If one file operation fails, log the error and continue with the rest
+- Final report: N succeeded, M failed (with failure reasons)
 
-### Example 4: Cache Cleanup
+## Notes
 
-**Agent runs on startup or on demand:**
-```
-1. Find files in cache/ older than 7 days
-2. Delete them
-3. Find empty directories, delete
-4. Log: "Cleaned N files from cache/"
-```
-
-## Version
-
-1.4.0 — Renamed apps/ to active/, clarified archives/projects/, made build artifact deletion opt-out
-
-## License
-
-MIT — Use, modify, share freely.
+- Never delete user files without confirmation
+- `memory/` is for agent state, `docs/` is for user content — do not mix
+- Do not force-create directories the user doesn't need
+- When a file's destination is unclear, list options and let user decide
+- All suggestions must be based on actual scan results, not assumptions
