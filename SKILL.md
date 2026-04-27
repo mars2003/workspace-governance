@@ -73,7 +73,7 @@ Platform mapping examples (not exhaustive):
 |----------|----------------|----------------|
 | Hermes | `~/.hermes/` | `hermes-agent/`, `bin/`, `cron/`, `sessions/`, `logs/` |
 | Claude Code | `~/.claude/` | `.claude/`, `.cache/` |
-| Generic/Unknown | `~/` | auto-detect agent/runtime dirs |
+| Generic/Unknown | `~/` (fallback only) | auto-detect agent/runtime dirs |
 
 If platform is unknown:
 - Auto-detect immutable directories by heuristics (agent/runtime/system dirs)
@@ -85,6 +85,8 @@ Default `{WORKSPACE_ROOT}` priority (keep it simple):
 2. Current project/repo root (if inside a repo)
 3. Platform recommended workspace path
 4. User home fallback
+
+If resolved root is `~/` (or similarly broad), require explicit user confirmation before any scan.
 
 ### SKILL_ADAPT Block (per-platform override)
 
@@ -124,6 +126,7 @@ Detection output template (show before execution):
 ## Flows
 
 Execute the matching flow based on user intent.
+If user provides multiple intents in one request, execute them sequentially and confirm each destructive step.
 
 **Safety rule: all move/delete operations must be shown as a plan table first. Execute only after user confirms.**
 
@@ -246,6 +249,10 @@ Lightweight check methods (reference, keep platform-neutral):
 | Temp files (*.tmp/*.temp/*.log) | `tmp/` or delete |
 | Build artifacts | delete |
 
+For `pdf/doc/docx` routing:
+- user-authored documents → `docs/`
+- external/reference materials → `assets/`
+
 ### Scope Rule
 
 All classification/move/delete rules apply to `{WORKSPACE_ROOT}` only.
@@ -276,6 +283,7 @@ node_modules/, __pycache__/, *.pyc, *.pyo
 ```
 
 Exception: keep if user explicitly says so.
+For Python virtual environments (`.venv/`, `venv/`, `env/`), do not delete by default; always ask for confirmation.
 
 ### Backup Discipline
 
