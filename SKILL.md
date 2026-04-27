@@ -121,53 +121,21 @@ Use the following order to avoid false positives and accidental moves:
    - Apply platform requirement first; then apply `cache_policy`
 5. Show detection summary and ask for confirmation before any destructive action
 
-### Platform Detection Pseudocode (reference)
+### Platform Detection (lightweight reference)
 
-```python
-def detect_platform_context(input_hint=None):
-    ctx = {
-        "platform": "unknown",
-        "workspace_root": None,
-        "immutable_dirs": set(),
-        "cache_dirs": [],
-        "cache_policy": "separate",
-    }
-
-    adapt = load_skill_adapt_if_any(input_hint)
-    if adapt:
-        ctx["platform"] = adapt.get("platform", "custom")
-        ctx["workspace_root"] = expand(adapt["workspace_root"])
-        ctx["immutable_dirs"].update(adapt.get("immutable_dirs", []))
-        ctx["cache_dirs"] = adapt.get("cache_dirs", [])
-        ctx["cache_policy"] = adapt.get("cache_policy", "separate")
-        return ctx
-
-    if exists("~/.hermes/") or has_dirs(["hermes-agent", "cron", "sessions"]):
-        ctx["platform"] = "hermes"
-        ctx["workspace_root"] = choose_existing([
-            "~/.hermes/workspace", "~/.hermes/"
-        ])
-        ctx["immutable_dirs"].update([
-            "hermes-agent/", "bin/", "cron/", "sessions/", "logs/"
-        ])
-        ctx["cache_dirs"] = existing_dirs(["cache/", "audio_cache/", "image_cache/"])
-        ctx["cache_policy"] = "separate"
-    elif exists("~/.claude/") or has_dirs([".claude"]):
-        ctx["platform"] = "claude-code"
-        ctx["workspace_root"] = "~/.claude/"
-        ctx["immutable_dirs"].update([".claude/", ".cache/"])
-        ctx["cache_dirs"] = existing_dirs(["cache/", ".cache/"])
-        ctx["cache_policy"] = "separate"
-    else:
-        ctx["platform"] = "generic"
-        ctx["workspace_root"] = detect_repo_or_home()
-        ctx["immutable_dirs"].update(detect_agent_runtime_dirs())
-        ctx["cache_dirs"] = detect_cache_dirs(ctx["workspace_root"])
-        ctx["cache_policy"] = "separate"
-
-    ctx["immutable_dirs"].update(global_protected_paths())
-    return ctx
-```
+1. Load `SKILL_ADAPT` if provided by user/project.
+2. Resolve `workspace_root` by priority:
+   - user-provided path
+   - current project/repo root
+   - platform recommended workspace
+   - user home fallback
+3. Resolve immutable directories:
+   - platform-native runtime dirs
+   - global protected paths (`.git/`, cert/key files, agent config dirs)
+4. Resolve cache directories and policy:
+   - collect detected cache-like dirs
+   - keep `separate` by default unless consolidation is explicitly safe
+5. Show detection summary and ask for confirmation before any destructive action.
 
 Detection output template (show before execution):
 
