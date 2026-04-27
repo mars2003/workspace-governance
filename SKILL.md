@@ -67,7 +67,7 @@ For each platform, identify:
 2. Platform-native directories (immutable, never touch)
 3. Cache locations (unified or separate, based on platform constraints)
 
-| Platform | Workspace Root | Immutable Dirs |
+| Platform | Workspace Root (default candidate) | Immutable Dirs |
 |----------|----------------|----------------|
 | Hermes | `~/.hermes/` | `hermes-agent/`, `bin/`, `cron/`, `sessions/`, `logs/` |
 | Claude Code | `~/.claude/` | `.claude/`, `.cache/` |
@@ -102,24 +102,6 @@ SKILL_ADAPT:
     - image_cache/
   cache_policy: separate # separate | consolidate
 ```
-
-### Platform Detection Decision Tree (reference)
-
-Use the following order to avoid false positives and accidental moves:
-
-1. If `SKILL_ADAPT` is explicitly provided by user/project:
-   - Use `workspace_root`, `immutable_dirs`, `cache_dirs`, `cache_policy` directly
-2. Else try known platform signatures:
-   - Hermes: `~/.hermes/` exists or dirs like `hermes-agent/`, `cron/`, `sessions/`
-   - Claude Code: `~/.claude/` exists or dirs like `.claude/`
-   - OpenClaw/Generic: fallback to user home or current repo root
-3. Derive immutable dirs:
-   - Start with platform defaults
-   - Add safety-critical dirs (`.git/`, keys/certs, agent config dirs)
-4. Derive cache dirs:
-   - Collect existing cache-like dirs (`cache/`, `*_cache/`, `.cache/`)
-   - Apply platform requirement first; then apply `cache_policy`
-5. Show detection summary and ask for confirmation before any destructive action
 
 ### Platform Detection (lightweight reference)
 
@@ -234,7 +216,7 @@ Trigger: "archive xxx" / "done with xxx" / "project xxx is finished"
 
 ### Flow D: Hygiene Check
 
-Trigger: "check" / "cleanup" / "audit"
+Trigger: "check" / "audit" / "health check"
 
 Scan and report:
 
