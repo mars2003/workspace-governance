@@ -6,8 +6,8 @@
 set -euo pipefail
 
 SKILL_FILE="./SKILL.md"
-ZH_FILE="./reference/治理手册.zh-CN.md"
-EN_FILE="./reference/Governance-Manual.md"
+ZH_FILE="./references/治理手册.zh-CN.md"
+EN_FILE="./references/Governance-Manual.md"
 
 for f in "$SKILL_FILE" "$ZH_FILE" "$EN_FILE"; do
   if [[ ! -f "$f" ]]; then

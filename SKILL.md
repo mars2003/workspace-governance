@@ -16,7 +16,7 @@ Methodology-first workspace governance for AI agents.
 For Chinese readers:
 
 - Quick entry: `README.zh-CN.md`
-- Detailed manual: `reference/治理手册.zh-CN.md`
+- Detailed manual: `references/治理手册.zh-CN.md`
 
 ## Purpose
 

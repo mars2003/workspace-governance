@@ -55,15 +55,15 @@ make check
 
 Beyond `SKILL.md`, you can optionally maintain:
 
-- `reference/`: manuals, process notes, strategy examples
+- `references/`: manuals, process notes, strategy examples
 - `assets/`: diagrams, screenshots, and visual resources
 - `scripts/`: helper scripts for checks, batch operations, exports
 - `tools/`: tool configs and integration notes
 
 ## Detailed Docs
 
-- English governance manual (detailed): `reference/Governance-Manual.md`
-- Chinese governance manual (detailed): `reference/治理手册.zh-CN.md`
+- English governance manual (detailed): `references/Governance-Manual.md`
+- Chinese governance manual (detailed): `references/治理手册.zh-CN.md`
 
 ## License
 

@@ -1,4 +1,4 @@
-# reference
+# references
 
 项目详细文档目录，用于存放不适合放在根 README 的长文档。
 

@@ -28,7 +28,7 @@ Executable semantics live in `SKILL.md`; this file focuses on onboarding, operat
 - `SKILL_ADAPT.yaml`: project-level policy parameters
 - `scripts/`: automated validation scripts
 - `tools/`: interoperability capability maps and tool mappings
-- `reference/`: explanatory, non-normative docs
+- `references/`: explanatory, non-normative docs
 
 ## Common Ops Playbook
 
@@ -61,4 +61,4 @@ To avoid long-term drift between duplicated documents.
 Start with section headers and mandatory policies in `SKILL.md`, then sync reference docs.
 
 **Q3: Where should Chinese users start?**  
-`README.zh-CN.md` first, then `reference/治理手册.zh-CN.md`; execution semantics still come from `SKILL.md`.
+`README.zh-CN.md` first, then `references/治理手册.zh-CN.md`; execution semantics still come from `SKILL.md`.

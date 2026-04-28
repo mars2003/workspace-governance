@@ -55,14 +55,14 @@ make check
 
 除 `SKILL.md` 外，建议按需扩展以下目录：
 
-- `reference/`：详细手册、流程说明、策略示例
+- `references/`：详细手册、流程说明、策略示例
 - `assets/`：图示、截图、可视化素材
 - `scripts/`：辅助脚本（检查、批处理、导出等）
 - `tools/`：工具配置、扩展工具说明
 
 ## 详细文档
 
-- 中文治理手册（详细版）：`reference/治理手册.zh-CN.md`
+- 中文治理手册（详细版）：`references/治理手册.zh-CN.md`
 
 ## 许可
 
