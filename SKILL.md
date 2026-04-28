@@ -1,5 +1,5 @@
 ---
-name: workspace-organizer
+name: workspace-governance
 description: >
   A methodology-first workspace governance skill for AI agents.
   Focuses on principles, decision framework, and safe execution patterns
@@ -7,7 +7,7 @@ description: >
   "archive", "workspace check", "整理工作区", "清理文件", "归档项目", "太乱了".
 ---
 
-# Workspace Organizer
+# Workspace Governance
 
 Methodology-first workspace governance for AI agents.
 

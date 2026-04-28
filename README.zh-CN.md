@@ -1,4 +1,4 @@
-# workspace-organizer
+# workspace-governance
 
 [English](README.md)
 
@@ -53,19 +53,19 @@ AI Agent 在工作过程中不断创建文件 — 脚本、图片、报告、临
 
 ```bash
 # Claude Code（全局）
-mkdir -p ~/.claude/skills/workspace-organizer
-cp SKILL.md ~/.claude/skills/workspace-organizer/
+mkdir -p ~/.claude/skills/workspace-governance
+cp SKILL.md ~/.claude/skills/workspace-governance/
 
 # Cursor（项目级）
-mkdir -p .cursor/skills/workspace-organizer
-cp SKILL.md .cursor/skills/workspace-organizer/
+mkdir -p .cursor/skills/workspace-governance
+cp SKILL.md .cursor/skills/workspace-governance/
 ```
 
 ### AlphaEngine
 
 ```bash
-mkdir -p ~/.alphaclaw/skills/workspace-organizer
-cp SKILL.md ~/.alphaclaw/skills/workspace-organizer/
+mkdir -p ~/.alphaclaw/skills/workspace-governance
+cp SKILL.md ~/.alphaclaw/skills/workspace-governance/
 ```
 
 ### 其他 Agent

@@ -1,4 +1,4 @@
-# workspace-organizer
+# workspace-governance
 
 [中文文档](README.zh-CN.md)
 
@@ -54,19 +54,19 @@ Copy `SKILL.md` to your agent's skill directory:
 
 ```bash
 # Claude Code (global)
-mkdir -p ~/.claude/skills/workspace-organizer
-cp SKILL.md ~/.claude/skills/workspace-organizer/
+mkdir -p ~/.claude/skills/workspace-governance
+cp SKILL.md ~/.claude/skills/workspace-governance/
 
 # Cursor (project-level)
-mkdir -p .cursor/skills/workspace-organizer
-cp SKILL.md .cursor/skills/workspace-organizer/
+mkdir -p .cursor/skills/workspace-governance
+cp SKILL.md .cursor/skills/workspace-governance/
 ```
 
 ### AlphaEngine
 
 ```bash
-mkdir -p ~/.alphaclaw/skills/workspace-organizer
-cp SKILL.md ~/.alphaclaw/skills/workspace-organizer/
+mkdir -p ~/.alphaclaw/skills/workspace-governance
+cp SKILL.md ~/.alphaclaw/skills/workspace-governance/
 ```
 
 ### Other Agents
