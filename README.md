@@ -45,6 +45,12 @@ The skill works without it, but with it, behavior is more stable and consistent 
 - "archive project xxx"
 - "create project yyy with boundaries"
 
+### 4) One-command validation (recommended)
+
+```bash
+make check
+```
+
 ## Suggested Directories
 
 Beyond `SKILL.md`, you can optionally maintain:

@@ -11,6 +11,13 @@ description: >
 
 Methodology-first workspace governance for AI agents.
 
+## Chinese Guide
+
+For Chinese readers:
+
+- Quick entry: `README.zh-CN.md`
+- Detailed manual: `reference/治理手册.zh-CN.md`
+
 ## Purpose
 
 This skill teaches an agent how to design a workspace management strategy that fits its own runtime, platform, and user preferences.

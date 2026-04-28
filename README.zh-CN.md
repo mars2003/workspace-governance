@@ -45,6 +45,12 @@ cp SKILL.md .cursor/skills/workspace-governance/
 - “归档项目 xxx”
 - “创建项目 yyy 并设置治理边界”
 
+### 4) 一键校验（推荐）
+
+```bash
+make check
+```
+
 ## 目录建议
 
 除 `SKILL.md` 外，建议按需扩展以下目录：
