@@ -209,6 +209,19 @@ Goal: audit quality signals and output fix recommendations.
 
 Note: The agent should choose implementation details based on local system constraints, not this document's examples.
 
+## Skill Interoperability (Optional)
+
+`workspace-governance` can run standalone, but some scenarios may benefit from companion skills/tools:
+
+- Git or GitHub-related archive verification: use Git/GitHub skill/tooling.
+- Cloud/object storage archive lifecycle: use cloud storage skills/tools.
+- Team approval workflow before destructive batches: use workflow/approval skills/tools.
+
+Interoperability rule:
+
+- Never assume companion skills are present.
+- If a companion capability is required by user intent but unavailable, report `blocked` with required dependency.
+
 ## Quality Signals for Audit
 
 Recommended checks:

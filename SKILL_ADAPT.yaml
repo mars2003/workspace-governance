@@ -6,6 +6,10 @@ meta:
   description: workspace-governance 默认适配配置（项目级）
 
 SKILL_ADAPT:
+  required_capabilities:
+    - file_inspection_and_manipulation
+    - logging_output
+    - user_confirmation
   workspace_root: .
   immutable_dirs:
     - .git

@@ -8,7 +8,7 @@ The goal is safe, reversible, and traceable workspace management without forcing
 ## Document Metadata
 
 - Author: Mars
-- Email: yangronghuang@outlook.com
+- GitHub: Mars2003
 - Date: 2026-04-28
 
 ## Core Principles (Short)

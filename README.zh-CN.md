@@ -8,7 +8,7 @@
 ## 文档元信息
 
 - 作者: Mars
-- 邮箱: yangronghuang@outlook.com
+- GitHub: Mars2003
 - 日期: 2026-04-28
 
 ## 核心原则（简版）

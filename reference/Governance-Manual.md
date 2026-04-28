@@ -237,3 +237,22 @@ Recommended minimum log fields:
 - `source_path`, `target_path`
 - `result` (success/failure/blocked)
 - `reversible`, `rollback_ref`
+
+## 14. Skill Interoperability (New)
+
+`workspace-governance` works standalone, but can optionally integrate with companion skills/tools:
+
+- Git/GitHub capability for archive verification
+- Cloud storage capability for archive lifecycle management
+- Workflow/approval capability for destructive-batch approvals
+
+Rules:
+
+- Do not assume companion skills are always available
+- If user intent requires missing dependencies, return `blocked` with required dependency details
+
+## 15. Maintenance Policy (Avoid Drift)
+
+- `SKILL.md` is the single source of truth for executable rules
+- `reference/` manuals are explanatory and must not introduce conflicting rules
+- Update order: `SKILL.md` first, manuals second
