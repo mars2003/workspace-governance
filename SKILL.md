@@ -92,6 +92,7 @@ SKILL_ADAPT:
 ### Adapt Loading Rules (Mandatory)
 
 If `SKILL_ADAPT.yaml` exists, the agent must read it before planning and execution.
+If platform profiles exist (for example `tools/adapt-profiles/openclaw.yaml`), the agent should load the matching profile as an overlay.
 
 Configuration precedence:
 
@@ -105,6 +106,12 @@ If `SKILL_ADAPT` parsing fails:
 - Do not silently ignore.
 - Fall back to conservative defaults.
 - Record a warning in governance logs.
+
+Profile merge semantics:
+
+- `immutable_dirs`: union (security items only increase)
+- `protected_files`: union (protection only increases)
+- `destructive_guard`: override allowed only when strictness is not reduced
 
 ## Decision Framework
 

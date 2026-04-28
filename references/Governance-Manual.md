@@ -30,6 +30,19 @@ Executable semantics live in `SKILL.md`; this file focuses on onboarding, operat
 - `tools/`: interoperability capability maps and tool mappings
 - `references/`: explanatory, non-normative docs
 
+## Agent Profile Merge (New)
+
+When a platform profile exists (for example `tools/adapt-profiles/openclaw.yaml`), use base + overlay:
+
+- base: `SKILL_ADAPT.yaml`
+- overlay: platform profile
+
+Merge semantics:
+
+- `immutable_dirs`: union (security list only grows)
+- `protected_files`: union (protection list only grows)
+- `destructive_guard`: override is allowed only if strictness is not reduced
+
 ## Common Ops Playbook
 
 ### 1) Rule update release

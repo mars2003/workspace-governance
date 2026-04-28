@@ -1,6 +1,6 @@
-.PHONY: check check-skill check-docs check-adapt
+.PHONY: check check-skill check-docs check-adapt check-openclaw
 
-check: check-skill check-docs check-adapt
+check: check-skill check-docs check-adapt check-openclaw
 
 check-skill:
 	bash scripts/check_skill_contract.sh
@@ -10,3 +10,6 @@ check-docs:
 
 check-adapt:
 	bash scripts/check_adapt_contract.sh
+
+check-openclaw:
+	bash scripts/check_openclaw_profile.sh
