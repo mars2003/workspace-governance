@@ -1,7 +1,7 @@
 # Workspace Governance Manual (Detailed)
 
 - Author: Mars
-- Email: yangronghuang@outlook.com
+- GitHub: Mars2003
 - Date: 2026-04-28
 
 ## Contents
