@@ -11,3 +11,5 @@
 - `interop-capabilities.yaml`：可选互操作能力矩阵与缺失依赖处理策略
 - `adapt-profiles/openclaw.yaml`：OpenClaw 平台 overlay 配置（与 base `SKILL_ADAPT.yaml` 合并）
 - `adapt-profiles/hermes.yaml`：Hermes 平台 overlay 配置（与 base `SKILL_ADAPT.yaml` 合并）
+- `adapt-profiles/cursor.yaml`：Cursor 平台轻量 overlay 配置
+- `adapt-profiles/claude-code.yaml`：Claude Code 平台轻量 overlay 配置
