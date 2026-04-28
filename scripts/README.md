@@ -14,6 +14,7 @@
 - `check_docs_sync.sh`：检查 `SKILL.md` 与中英文手册是否保持同步结构
 - `check_adapt_contract.sh`：检查 `SKILL_ADAPT.yaml` 是否包含关键策略字段
 - `check_openclaw_profile.sh`：检查 OpenClaw profile 关键安全字段与合并策略
+- `check_hermes_profile.sh`：检查 Hermes profile 关键安全字段与平台策略
 
 ## 使用示例
 
@@ -32,4 +33,7 @@ bash scripts/check_adapt_contract.sh
 
 # 检查 OpenClaw profile 契约
 bash scripts/check_openclaw_profile.sh
+
+# 检查 Hermes profile 契约
+bash scripts/check_hermes_profile.sh
 ```
