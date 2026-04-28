@@ -35,6 +35,20 @@ The agent should adapt based on context, then execute safely.
 - User asks for workspace audit/health check.
 - Agent needs to establish sustainable file governance rules.
 
+## Required Capabilities and Preconditions
+
+Before execution, the agent should verify runtime capabilities:
+
+1. File/dir inspection and manipulation (`ls`, move, rename, archive, delete).
+2. Logging output capability (file or structured output sink).
+3. User confirmation capability for ambiguous/destructive actions.
+
+Preconditions:
+
+- `workspace_root` must be defined (user-provided or default current directory).
+- If `workspace_root` is broad/high-risk, require explicit confirmation before scanning.
+- If confirmation capability is unavailable, `ask-user` items are blocking items.
+
 ## Scope and Boundaries
 
 The agent must define these before execution:
@@ -68,6 +82,23 @@ SKILL_ADAPT:
   naming_policy: inherit # inherit | enforce
 ```
 
+### Adapt Loading Rules (Mandatory)
+
+If `SKILL_ADAPT.yaml` exists, the agent must read it before planning and execution.
+
+Configuration precedence:
+
+1. User explicit instruction in current session.
+2. `SKILL_ADAPT` config.
+3. Repository conventions detected from files.
+4. Conservative defaults from this skill.
+
+If `SKILL_ADAPT` parsing fails:
+
+- Do not silently ignore.
+- Fall back to conservative defaults.
+- Record a warning in governance logs.
+
 ## Decision Framework
 
 Before any move/delete action, produce a governance plan with:
@@ -98,16 +129,33 @@ Before any move/delete action, produce a governance plan with:
 
 Use this pattern regardless of platform:
 
-1. Detect context and boundaries.
-2. Scan inside `workspace_root` only.
-3. Classify findings: keep/move/rename/archive/delete/ask-user.
-4. Generate plan table with reasons and risks.
-5. Get confirmation for destructive or ambiguous actions.
-6. Execute in small batches.
-7. Report results and failures.
-8. Record governance log for traceability.
+1. Detect context and runtime capabilities.
+2. Load `SKILL_ADAPT` (if present) and resolve effective policy by precedence.
+3. Detect boundaries (`workspace_root`, immutable/protected scope).
+4. Scan inside `workspace_root` only.
+5. Classify findings: keep/move/rename/archive/delete/ask-user.
+6. Generate plan table with reasons, risks, and rollback checkpoints.
+7. Get confirmation for destructive or ambiguous actions.
+8. Execute in small batches with checkpoint logs.
+9. Report results and failures.
+10. Record governance log for traceability.
 
 If multiple user intents exist, process sequentially and reconfirm between destructive batches.
+
+## Non-Interactive Safety Policy (Mandatory)
+
+For non-interactive runtimes (cron, background subagent, execute-only environments):
+
+- If any item is classified as `ask-user`, the agent must stop with status `blocked`.
+- The agent must output a `pending_decisions` list and required user input.
+- The agent must not silently skip, auto-approve, or auto-delete ambiguous items.
+- Destructive actions without confirmation capability must be refused (`fail-fast`).
+
+Recommended blocked output:
+
+| Item | Proposed Action | Block Reason | Needed Input |
+|------|-----------------|-------------|--------------|
+| report-final.docx | ask-user | no confirmation channel | choose destination |
 
 ## Classification Heuristics (Flexible)
 
@@ -186,6 +234,26 @@ The agent should keep a lightweight operation record, including:
 - Planned changes vs executed changes
 - Success/failure counts
 - Unresolved decisions pending user input
+
+### Rollback and Checkpoint Schema (Minimum)
+
+Each execution should create:
+
+1. A pre-execution checkpoint (`checkpoint_before`).
+2. A checkpoint per batch (`checkpoint_batch_<n>`).
+3. A final checkpoint (`checkpoint_after`).
+
+Minimum log fields:
+
+- `timestamp` (`YYYY-MM-DD HH:mm:ss`)
+- `intent` (organize/create/archive/audit)
+- `batch_id`
+- `action` (move/rename/archive/delete)
+- `source_path`
+- `target_path`
+- `result` (success/failure/blocked)
+- `reversible` (yes/no)
+- `rollback_ref` (checkpoint id or recovery note)
 
 ## Anti-Patterns to Avoid
 

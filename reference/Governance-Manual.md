@@ -200,3 +200,40 @@ Yes, but dry-run and explicit confirmation are still recommended.
 
 **Q3: Is it suitable for all agents?**  
 It is suitable for agents that support skill/rule files and basic Unix shell operations.
+
+## 13. Execution Dependencies and Non-Interactive Policy (New)
+
+### Required capabilities and preconditions
+
+- File/dir operations (scan, move, rename, archive, delete)
+- Logging capability (file sink or structured output)
+- User confirmation capability for destructive and ambiguous actions
+- `workspace_root` must be defined before execution
+
+### `SKILL_ADAPT` integration requirements
+
+- If `SKILL_ADAPT.yaml` exists, it must be loaded before planning
+- Precedence: user explicit instruction > `SKILL_ADAPT` > repository conventions > conservative defaults
+- Parse failures must not be silently ignored; fallback + warning log are required
+
+### Non-interactive safety policy
+
+For cron/background/execute-only runtimes:
+
+- Any `ask-user` item must stop execution with `blocked` status
+- A `pending_decisions` list must be emitted
+- Silent skip, auto-approval, and auto-delete on ambiguous items are forbidden
+- If confirmation capability is unavailable, destructive actions must fail fast
+
+### Minimum rollback/checkpoint schema
+
+- Pre-checkpoint: `checkpoint_before`
+- Per-batch checkpoint: `checkpoint_batch_<n>`
+- Post-checkpoint: `checkpoint_after`
+
+Recommended minimum log fields:
+
+- `timestamp`, `intent`, `batch_id`, `action`
+- `source_path`, `target_path`
+- `result` (success/failure/blocked)
+- `reversible`, `rollback_ref`
