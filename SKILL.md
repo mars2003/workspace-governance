@@ -1,346 +1,213 @@
 ---
 name: workspace-organizer
 description: >
-  Organize workspace files, clean up clutter, archive finished projects,
-  and enforce directory structure. Triggers on "organize", "tidy up",
-  "cleanup", "archive project", "create project", "messy workspace".
-  Also triggers on Chinese: "整理工作区", "清理文件", "归档项目",
-  "太乱了", "帮我整理一下", "创建项目".
+  A methodology-first workspace governance skill for AI agents.
+  Focuses on principles, decision framework, and safe execution patterns
+  instead of fixed directory templates. Triggers on "organize", "cleanup",
+  "archive", "workspace check", "整理工作区", "清理文件", "归档项目", "太乱了".
 ---
 
 # Workspace Organizer
 
-Automated workspace hygiene for AI agents.
+Methodology-first workspace governance for AI agents.
 
-## Overview
+## Purpose
 
-Workspaces accumulate clutter over time: stray files in root, expired temp files, unarchived projects, chaotic naming. This skill provides rules and executable flows to keep the workspace clean.
+This skill teaches an agent how to design a workspace management strategy that fits its own runtime, platform, and user preferences.
+
+This is not a single directory template and not a rigid SOP.  
+The agent should adapt based on context, then execute safely.
+
+## Core Principles
+
+1. Boundary before structure: define what can be touched first.
+2. Plan before action: generate a governance plan before file operations.
+3. Reversible before optimized: preserve rollback paths and avoid irreversible changes.
+4. Fit current system first: reuse existing conventions when they are workable.
+5. User control at key points: destructive operations require explicit confirmation.
+6. Evidence-driven decisions: only propose actions based on real scan results.
 
 ## When to Use
 
-- "organize my workspace" / "tidy up" / "cleanup"
-- "archive project xxx" / "done with xxx"
-- "create project xxx"
-- "workspace check" / "too messy"
+- Workspace is messy and needs cleanup or reorganization.
+- User asks to archive/close finished work.
+- User asks to create a new project with clear boundaries.
+- User asks for workspace audit/health check.
+- Agent needs to establish sustainable file governance rules.
 
-## Directory Structure
+## Scope and Boundaries
 
-This skill separates **platform directories** from **workspace directories**.
+The agent must define these before execution:
 
-Use `<home>` as the host root, but only reorganize inside `{WORKSPACE_ROOT}`.
+- `workspace_root`: the manageable boundary for this task.
+- `immutable_dirs`: directories that must never be moved/deleted/renamed.
+- `protected_files`: sensitive files (keys, env, certs, VCS metadata).
+- `risk_level`: low/medium/high based on destructive potential.
 
-```
-<home>/
-├── {PLATFORM_DIRS}/     # Auto-detected, immutable, never move/delete
-├── {WORKSPACE_ROOT}/    # Reorganizable scope for this skill
-│   ├── active/              # Projects currently in development
-│   ├── skills/              # Reusable skill files
-│   ├── memory/              # Agent persistent state (notes, logs)
-│   ├── docs/                # User documents, articles, references
-│   ├── scripts/             # Global utility scripts (shared across projects)
-│   ├── assets/              # Active resources (images, audio, PPT, PDF)
-│   ├── archives/            # Cold storage
-│   │   ├── projects/        # Completed or abandoned projects
-│   │   └── assets/          # Retired resource files
-│   ├── cache/               # Temporary cache (auto-expire, ≤7 days)
-│   ├── tmp/                 # Scratch space (delete when task is done)
-│   └── [config files]       # .env, *.yaml, *.json, etc.
-```
+If `workspace_root` is too broad (for example home root), require explicit confirmation before scanning.
 
-**Routing rules**:
-- Agent's own state/notes → `memory/` (not project data)
-- User-authored articles, references → `docs/`
-- Non-text resources (images, audio, video, PPT, PDF) → `assets/`
-- Active development → `active/<project-name>/`
-- Finished or abandoned work → `archives/projects/`
-- Platform-native files/directories → leave as-is (never suggest moving)
-- Uncertain → list options for user to decide; never assume
+## Adaptation Model (Platform-Agnostic)
 
-Only create directories as needed. Do not scaffold empty directories on first run.
+The agent should adapt strategy using this order:
 
-## Platform Adaptation
+1. User explicit constraints and preferences.
+2. Current repository/project conventions.
+3. Platform/runtime restrictions.
+4. Conservative fallback defaults.
 
-Detect the current platform before running any flow.
+Do not force a fixed folder structure unless the user requests standardization.
 
-For each platform, identify:
-1. Workspace root (where rules apply)
-2. Platform-native directories (immutable, never touch)
-3. Cache locations (unified or separate, based on platform constraints)
-
-Platform mapping examples (not exhaustive):
-
-| Platform | Workspace Root (default candidate) | Immutable Dirs |
-|----------|----------------|----------------|
-| Hermes | `~/.hermes/` | `hermes-agent/`, `bin/`, `cron/`, `sessions/`, `logs/` |
-| Claude Code | `~/.claude/` | `.claude/`, `.cache/` |
-| Generic/Unknown | `~/` (fallback only) | auto-detect agent/runtime dirs |
-
-If platform is unknown:
-- Auto-detect immutable directories by heuristics (agent/runtime/system dirs)
-- Show detected result to user before any move/delete operations
-- Ask user to confirm `{WORKSPACE_ROOT}`
-
-Default `{WORKSPACE_ROOT}` priority (keep it simple):
-1. User explicitly provided path
-2. Current project/repo root (if inside a repo)
-3. Platform recommended workspace path
-4. User home fallback
-
-If resolved root is `~/` (or similarly broad), require explicit user confirmation before any scan.
-
-### SKILL_ADAPT Block (per-platform override)
+### Optional Adapt Block
 
 ```yaml
 SKILL_ADAPT:
-  workspace_root: <user-defined-path>
+  workspace_root: <path>
   immutable_dirs: [dir1, dir2]
+  protected_files: [pattern1, pattern2]
   cache_policy: separate # separate | consolidate
+  naming_policy: inherit # inherit | enforce
 ```
 
-### Platform Detection (lightweight reference)
+## Decision Framework
 
-1. Load `SKILL_ADAPT` if provided by user/project.
-2. Resolve `workspace_root` by priority:
-   - user-provided path
-   - current project/repo root
-   - platform recommended workspace
-   - user home fallback
-3. Resolve immutable directories:
-   - platform-native runtime dirs
-   - global protected paths (`.git/`, cert/key files, agent config dirs)
-4. Resolve cache directories and policy:
-   - collect detected cache-like dirs
-   - keep `separate` by default unless consolidation is explicitly safe
-5. Show detection summary and ask for confirmation before any destructive action.
+Before any move/delete action, produce a governance plan with:
 
-Detection output template (show before execution):
+1. **Current State Summary**
+   - What is cluttered
+   - What is ambiguous
+   - What is sensitive
+2. **Target Strategy**
+   - Keep, move, rename, archive, delete policy
+   - Naming and lifecycle policy
+   - Cache/temp policy
+3. **Risk and Rollback**
+   - Risks per action class
+   - Rollback method and checkpoints
+4. **User Confirmation Items**
+   - Items that need user decision
+   - Items excluded from automation
 
-| Key | Value |
-|-----|-------|
-| Platform | `{platform}` |
-| Workspace Root | `{workspace_root}` |
-| Immutable Dirs | `{immutable_dirs}` |
-| Cache Dirs | `{cache_dirs}` |
-| Cache Policy | `{cache_policy}` |
+### Plan Output Template
 
-## Flows
+| Item | Current | Proposed Action | Target | Risk | Reason |
+|------|---------|-----------------|--------|------|--------|
+| example.tmp | root | delete | — | medium | temporary artifact |
+| report-final.docx | root | ask user | docs or archive | low | destination ambiguous |
 
-Execute the matching flow based on user intent.
-If user provides multiple intents in one request, execute them sequentially and confirm each destructive step.
+## Execution Pattern (Generic)
 
-**Safety rule: all move/delete operations must be shown as a plan table first. Execute only after user confirms.**
+Use this pattern regardless of platform:
 
----
+1. Detect context and boundaries.
+2. Scan inside `workspace_root` only.
+3. Classify findings: keep/move/rename/archive/delete/ask-user.
+4. Generate plan table with reasons and risks.
+5. Get confirmation for destructive or ambiguous actions.
+6. Execute in small batches.
+7. Report results and failures.
+8. Record governance log for traceability.
 
-### Flow A: Organize Workspace
+If multiple user intents exist, process sequentially and reconfirm between destructive batches.
 
-Trigger: "organize" / "tidy up" / "clean up" / "messy"
+## Classification Heuristics (Flexible)
 
-1. Run platform detection (resolve `{WORKSPACE_ROOT}` and immutable dirs)
-2. Scan `{WORKSPACE_ROOT}` with `bash ls -la` and `glob` (skip immutable dirs)
-3. Classify each file per the Classification Rules below
-4. Build a plan table:
+Use heuristics, not hard-coded folders:
 
-   | File | Current | Target | Action | Reason |
-   |------|---------|--------|--------|--------|
-   | image.png | root | assets/ | move | non-text resource |
-   | \_\_pycache\_\_/ | root | — | delete | build artifact |
-   | test.py | root | — | ask user | ambiguous name |
+- **Project artifacts**: source code, configs, tests, docs tied to one project.
+- **Reusable assets**: media or references used across projects.
+- **Ephemeral data**: cache/tmp/build artifacts/log leftovers.
+- **Agent/runtime state**: tool configs, sessions, internal runtime files.
+- **Ambiguous items**: unclear ownership or destination.
 
-5. Present plan, wait for confirmation
-   - User approves → execute
-   - User excludes items → update plan, re-confirm
-6. Execute with `bash mv` / `bash rm -rf`
-7. Report results: moved N, deleted M, skipped K
-8. Append summary to `memory/workspace-log.md`:
-   ```
-   ## {YYYY-MM-DD} Organize
-   - Moved N files, deleted M, skipped K
-   - Key changes: {brief list}
-   ```
+Rules:
+- Ambiguous items must be escalated to user decisions.
+- Never silently rename if semantic meaning may change.
+- Never overwrite existing files on move.
 
----
+## Safety Baseline (Mandatory)
 
-### Flow B: Create Project
+### Never Touch Without Explicit User Approval
 
-Trigger: "create project xxx" / "new project"
+- Version control metadata (`.git/`, `.svn/`, `.hg/`)
+- Secret material (`*.key`, `*.pem`, `*.p12`, private credentials)
+- Environment files (`.env` and equivalents)
+- Agent/runtime configuration directories
 
-1. Convert project name to kebab-case
-2. Create directory under `{WORKSPACE_ROOT}/active/`
-3. Create `README.md` with:
-   - project name
-   - status (`active`)
-   - created date (`YYYY-MM-DD`)
-   - brief purpose
+### Destructive Action Guardrails
 
-4. Tell user: all project files go in `{WORKSPACE_ROOT}/active/{project-name}/`, temp outputs go in `{WORKSPACE_ROOT}/tmp/`
+- Always show dry-run plan first.
+- Require explicit confirmation for delete and bulk move.
+- Use collision-safe naming on move.
+- Keep operation logs and failure reasons.
+- Stop and ask user if unexpected high-risk patterns are detected.
 
----
+## Standard Operation Modes
 
-### Flow C: Archive Project
+### 1) Organize
 
-Trigger: "archive xxx" / "done with xxx" / "project xxx is finished"
+Goal: improve discoverability and reduce clutter with minimal disturbance.
 
-1. Locate project directory with `glob` (usually under `{WORKSPACE_ROOT}/active/`)
-   - Not found → ask user to confirm name and location
-2. Build archive plan:
-   - Deliverables → move to `{WORKSPACE_ROOT}/assets/` (if user wants)
-   - Project directory → move to `{WORKSPACE_ROOT}/archives/projects/{project-name}/`
-   - Related `{WORKSPACE_ROOT}/tmp/`, cache files → delete
-   - Build artifacts (`node_modules/`, `__pycache__/`, etc.) → delete
-3. Update README.md: status → "archived", add archive date
-4. Present plan, execute after user confirms
-5. Append record to `memory/workspace-log.md`:
-   ```
-   ## {YYYY-MM-DD} Archive
-   - Project: {project-name}
-   - Archived to: {WORKSPACE_ROOT}/archives/projects/{project-name}/
-   - Cleaned: {deleted temp files and build artifacts}
-   ```
+### 2) Create Project
 
----
+Goal: initialize a new work area aligned with existing conventions.
 
-### Flow D: Hygiene Check
+### 3) Archive Project
 
-Trigger: "check" / "audit" / "health check"
+Goal: transition inactive work into retrievable cold storage with metadata.
 
-Scan and report:
+### 4) Hygiene Check
 
-```
-□ `{WORKSPACE_ROOT}` root contains only config files and directories
-□ No forbidden file types in `{WORKSPACE_ROOT}` root (images, docs, scripts)
-□ No files older than 7 days in cache dirs (or unified `cache/`)
-□ Backup count per config file ≤ 3
-□ No bad names (test.py, temp, untitled, non-ASCII directory names)
-□ No leftover build artifacts (__pycache__/, node_modules/)
-□ Every project in `{WORKSPACE_ROOT}/active/` has README.md with status = active
-□ No empty directories
-```
+Goal: audit quality signals and output fix recommendations.
 
-Output format:
-- Pass items → ✅, violations → ❌ with fix suggestion
-- Summary: "Found N issues, suggested fixes:" + fix plan table
-- Execute fixes after user confirms
+Note: The agent should choose implementation details based on local system constraints, not this document's examples.
 
-Lightweight check methods (reference, keep platform-neutral):
-- Root file type check: list root entries and match against allow/forbid rules
-- Cache expiry check: detect files older than 7 days in each cache dir
-- Backup count check: group by config basename and ensure max 3 backups
-- Naming check: match against bad-name patterns (`test`, `temp`, `untitled`, non-ASCII dirs)
-- Build artifact check: detect known artifact dirs/files from the list below
-- Active project README check: verify each `active/*/README.md` exists and contains `Status: active`
+## Quality Signals for Audit
 
-## Classification Rules
+Recommended checks:
 
-### Allowed in Root
+- Boundary clarity (what is managed vs protected)
+- Root clutter level
+- Naming consistency
+- Build/cache residue
+- Archive lifecycle completeness
+- Recoverability (rollback/readability of logs)
 
-- Config files: `.env`, `*.yaml`, `*.toml`, `*.json`, `*.ini`, `*.conf`
-- Special markdown: `README.md`, `LICENSE`, `CHANGELOG.md`
-- Directories
+Output style:
+- Pass items with clear evidence.
+- Violations with fix suggestion and risk level.
+- Summary with actionable next steps.
 
-### Forbidden in Root (move on sight)
+## Logging and Traceability
 
-| File Type | Target |
-|-----------|--------|
-| Images (png/jpg/gif/svg/webp/ico) | `assets/` |
-| Audio/Video (mp3/mp4/wav/avi/mov) | `assets/` |
-| Documents (ppt/pptx/pdf/doc/docx/xlsx/xls) | `assets/` or `docs/` |
-| Scripts (py/sh/js/ts) | `scripts/` (global) or `active/{project}/` (project-specific) |
-| Temp files (*.tmp/*.temp/*.log) | `tmp/` or delete |
-| Build artifacts | delete |
+The agent should keep a lightweight operation record, including:
 
-For `pdf/doc/docx` routing:
-- user-authored documents → `docs/`
-- external/reference materials → `assets/`
+- Date (`YYYY-MM-DD`)
+- Intent type (organize/create/archive/audit)
+- Planned changes vs executed changes
+- Success/failure counts
+- Unresolved decisions pending user input
 
-### Scope Rule
+## Anti-Patterns to Avoid
 
-All classification/move/delete rules apply to `{WORKSPACE_ROOT}` only.
+- Forcing a universal directory layout on every system
+- Performing bulk cleanup without a dry-run plan
+- Treating unknown files as disposable
+- Optimizing structure while ignoring user workflow habits
+- Mixing agent state and user business content without explicit mapping
 
-Never classify, move, rename, or delete files inside `{PLATFORM_DIRS}`.
+## Minimal Example (Reference Only)
 
-### Naming Convention
+Example principles in action:
 
-**Directories**: lowercase English, hyphens, semantic
-- ✅ `market-analysis`, `weekly-reports`, `image-generator`
-- ❌ `temp`, `aaa`, `stuff`, `misc`
+1. Detect workspace boundary and immutable dirs.
+2. Scan only within boundary.
+3. Mark ambiguous files as `ask-user`.
+4. Confirm plan before delete/move.
+5. Execute and log.
 
-**Files**: semantic name + extension, ASCII only (letters, digits, `-`, `_`, `.`)
-- ✅ `market-analysis-2026-04.md`, `config-v2.yaml`
-- ❌ `1.py`, `test.py`, `report@latest.docx`
+This example is illustrative, not normative.
 
-**Dates**: `YYYY-MM-DD` or `YYYYMMDD` only
+## Author
 
-When encountering bad names, suggest a new name for user to confirm. Never rename silently.
-
-### Build Artifacts (delete by default)
-
-```
-node_modules/, __pycache__/, *.pyc, *.pyo
-.pytest_cache/, dist/, build/, *.egg-info/
-.venv/, venv/, env/
-.parcel-cache/, .next/, .nuxt/
-```
-
-Exception: keep if user explicitly says so.
-For Python virtual environments (`.venv/`, `venv/`, `env/`), do not delete by default; always ask for confirmation.
-
-### Backup Discipline
-
-Max 3 backup versions per config file:
-
-```
-config.yaml           (current)
-config.yaml.bak       (previous)
-config.yaml.bak.1     (two versions ago)
-```
-
-Delete older backups automatically. Only config files get backups — not data, not projects.
-
-### Cache Consolidation
-
-When multiple cache directories exist (for example `cache/`, `audio_cache/`, `image_cache/`):
-- Default to `separate` (do not merge automatically)
-- Suggest consolidation only when user requests it and both checks pass:
-  - no explicit path references in configs/scripts
-  - no platform/runtime fixed-path requirement
-
-## Safety
-
-### Protected Paths (never touch)
-
-```
-.git/, .svn/, .hg/              # Version control
-.env                             # Environment variables (check location, don't move)
-*.key, *.pem, *.p12             # Certificates and keys
-Agent config directories         # e.g. .claude/, .cursor/, platform-specific dirs
-```
-
-Skip these during scans. Never suggest moving or deleting them.
-
-### Dry-run First
-
-All destructive operations must show a plan first:
-- Format: table with file / action / reason
-- Execute only after user confirms
-- If user excludes items, update plan and re-confirm
-
-### Name Collision
-
-When moving a file to a location that already has the same name:
-- Append date suffix: `image.png` → `image-20260427.png`
-- Never overwrite existing files
-
-### Error Handling
-
-- Auto-create target directory if missing (`mkdir -p`)
-- If one file operation fails, log the error and continue with the rest
-- Final report: N succeeded, M failed (with failure reasons)
-
-## Notes
-
-- Never delete user files without confirmation
-- `memory/` is for agent state, `docs/` is for user content — do not mix
-- Do not force-create directories the user doesn't need
-- When a file's destination is unclear, list options and let user decide
-- All suggestions must be based on actual scan results, not assumptions
+- 作者: Mars2003 （GitHub）
+- 日期: 2026-04-28
