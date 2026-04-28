@@ -63,6 +63,12 @@ make check
 ## 详细文档
 
 - 中文治理手册（详细版）：`references/治理手册.zh-CN.md`
+- 最小运行示例：`examples/minimal-governance-run.md`
+
+## 项目信息
+
+- 版本日志：`CHANGELOG.md`
+- 贡献指南：`CONTRIBUTING.md`
 
 ## 许可
 

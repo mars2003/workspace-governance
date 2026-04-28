@@ -64,6 +64,12 @@ Beyond `SKILL.md`, you can optionally maintain:
 
 - English governance manual (detailed): `references/Governance-Manual.md`
 - Chinese governance manual (detailed): `references/治理手册.zh-CN.md`
+- Minimal run example: `examples/minimal-governance-run.md`
+
+## Project Meta
+
+- Changelog: `CHANGELOG.md`
+- Contributing guide: `CONTRIBUTING.md`
 
 ## License
 
