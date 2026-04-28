@@ -2,49 +2,36 @@
 
 [中文文档](README.zh-CN.md)
 
-A universal skill that keeps your AI agent's workspace clean and organized.
+A methodology-first workspace governance skill for AI agents.
 
 Works with any AI coding agent that supports skill/rule files — Claude Code, Cursor, Windsurf, AlphaEngine, or similar.
 
-## The Problem
+## Why This Skill
 
-AI agents create files constantly — scripts, images, reports, temporary outputs. Without structure, the workspace becomes a mess:
+AI agents generate files constantly. Over time, clutter and ambiguous ownership make workspaces harder to maintain and riskier to clean.
 
-- Root directory filled with random files
-- Duplicate or orphaned directories
-- Finished projects never archived
-- Backup files piling up
-- Naming chaos (`test1.py`, `Untitled`, non-ASCII names)
-- Build artifacts (`node_modules/`, `__pycache__/`) cluttering everything
+This skill does not enforce one fixed directory layout.  
+It teaches the agent how to design a governance strategy that fits local constraints and user preferences.
 
-## What It Does
+## Core Positioning
 
-Give your agent a simple command, and it handles the rest:
+`workspace-governance` is a governance framework, not a folder template.
 
-| You say | Agent does |
-|---------|-----------|
-| "organize" | Scan root, classify files, show plan, execute after confirmation |
-| "create project x" | Scaffold `active/x/` with README |
-| "done with x" | Archive project, clean temp files, log the action |
-| "cleanup" | Run hygiene checklist, report violations, suggest fixes |
+- Boundary before structure
+- Plan before action
+- Reversible before optimized
+- Context-fit before standardization
+- User confirmation for destructive decisions
 
-**Safety first** — every move/delete operation is shown as a dry-run plan table. Nothing happens until you confirm.
+## What the Agent Learns to Do
 
-## Directory Structure
+Instead of hard-coding folders, the agent should:
 
-```
-<workspace>/
-├── active/          # Current projects
-├── scripts/         # Global utility scripts
-├── docs/            # Articles, references
-├── assets/          # Images, audio, documents
-├── archives/        # Finished work
-│   ├── projects/
-│   └── assets/
-├── memory/          # Agent state & logs
-├── cache/           # Auto-expire temp (≤7 days)
-└── tmp/             # Scratch space
-```
+1. Define manageable boundaries (`workspace_root`, immutable/protected areas).
+2. Scan and classify real files (keep/move/rename/archive/delete/ask-user).
+3. Build a governance plan with risk and rollback notes.
+4. Confirm destructive or ambiguous operations with the user.
+5. Execute in batches and record traceable logs.
 
 ## Install
 
@@ -73,68 +60,38 @@ cp SKILL.md ~/.alphaclaw/skills/workspace-governance/
 
 Place `SKILL.md` wherever your agent reads skill/rule files. The content is platform-agnostic — it uses standard shell commands (`mv`, `rm`, `mkdir -p`, `ls`) that work on any Unix-like system.
 
-## Key Design Decisions
+## Recommended Interaction Intents
 
-**Dry-run by default.** Every destructive operation shows a plan first. The agent cannot delete or move files without user confirmation.
+- "organize workspace"
+- "archive project <name>"
+- "create project <name>"
+- "workspace audit" / "hygiene check"
+- "cleanup with plan first"
 
-**Protected paths.** Version control (`.git/`), environment files (`.env`), certificates (`*.key`, `*.pem`), and agent config directories are never touched.
+The exact implementation should depend on local system constraints, not a fixed path recipe.
 
-**Name collision safety.** Moving `image.png` to a folder that already has one? It becomes `image-20260427.png`. Never overwrites.
+## Safety Baseline
 
-**Operation logging.** Every organize/archive action is logged to `memory/workspace-log.md` with date and summary, so you have a trail.
+- Dry-run plan before destructive actions.
+- Explicit user confirmation for delete and bulk move.
+- Never touch version-control metadata and sensitive credentials by default.
+- Never overwrite on name collision.
+- Keep operation summaries for traceability.
 
-**Minimal scaffolding.** Directories are created on-demand, not all at once. No empty `archives/assets/` sitting around from day one.
+## Governance Plan Template
 
-## Example
+Before execution, the agent should provide a plan table:
 
-**Before:**
-```
-~/workspace/
-├── test.py
-├── image.png
-├── report.pptx
-├── notes.txt
-├── config.yaml
-├── config.yaml.bak
-├── config.yaml.bak.1
-├── config.yaml.bak.2
-├── config.yaml.bak.3
-├── __pycache__/
-└── node_modules/
-```
+| Item | Current | Proposed Action | Target | Risk | Reason |
+|------|---------|-----------------|--------|------|--------|
+| example.tmp | root | delete | — | medium | temporary artifact |
+| report-final.docx | root | ask-user | docs or archive | low | destination ambiguous |
 
-**You say:** "organize"
+## Notes
 
-**Agent shows plan:**
-
-| File | Action | Target | Reason |
-|------|--------|--------|--------|
-| image.png | move | assets/ | non-text resource |
-| report.pptx | move | assets/ | document |
-| notes.txt | move | docs/ | user content |
-| test.py | move | scripts/ | script (suggest rename) |
-| config.yaml.bak.3 | delete | — | exceeds 3-backup limit |
-| \_\_pycache\_\_/ | delete | — | build artifact |
-| node_modules/ | delete | — | build artifact |
-
-**You say:** "go"
-
-**After:**
-```
-~/workspace/
-├── active/
-├── assets/
-│   ├── image.png
-│   └── report.pptx
-├── docs/
-│   └── notes.txt
-├── scripts/
-│   └── test.py
-├── config.yaml
-├── config.yaml.bak
-├── config.yaml.bak.1
-└── config.yaml.bak.2
-```
+- This repository intentionally avoids prescribing one universal directory tree.
+- If you need strict standardization, define it explicitly through `SKILL_ADAPT` or project rules.
+- Default behavior should remain conservative and reversible.
 
 ## License
 
