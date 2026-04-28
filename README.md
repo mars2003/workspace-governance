@@ -2,42 +2,26 @@
 
 [中文文档](README.zh-CN.md)
 
-A methodology-first workspace governance skill for AI agents.
+A methodology-first workspace governance skill for AI agents.  
+The goal is safe, reversible, and traceable workspace management without forcing a fixed folder scaffold.
 
-Works with any AI coding agent that supports skill/rule files — Claude Code, Cursor, Windsurf, OpenClaw, Hermes Agent, or similar.
+## Document Metadata
 
-## Why This Skill
+- Author: Mars
+- Email: yangronghuang@outlook.com
+- Date: 2026-04-28
 
-AI agents generate files constantly. Over time, clutter and ambiguous ownership make workspaces harder to maintain and riskier to clean.
-
-This skill does not enforce one fixed directory layout.  
-It teaches the agent how to design a governance strategy that fits local constraints and user preferences.
-
-## Core Positioning
-
-`workspace-governance` is a governance framework, not a folder template.
+## Core Principles (Short)
 
 - Boundary before structure
 - Plan before action
 - Reversible before optimized
-- Context-fit before standardization
-- User confirmation for destructive decisions
+- Explicit confirmation for delete and bulk move
+- Protect sensitive files and VCS metadata by default
 
-## What the Agent Learns to Do
+## Quick Start
 
-Instead of hard-coding folders, the agent should:
-
-1. Define manageable boundaries (`workspace_root`, immutable/protected areas).
-2. Scan and classify real files (keep/move/rename/archive/delete/ask-user).
-3. Build a governance plan with risk and rollback notes.
-4. Confirm destructive or ambiguous operations with the user.
-5. Execute in batches and record traceable logs.
-
-## Install
-
-### Claude Code / Cursor / Windsurf
-
-Copy `SKILL.md` to your agent's skill directory:
+### 1) Install the skill
 
 ```bash
 # Claude Code (global)
@@ -49,42 +33,31 @@ mkdir -p .cursor/skills/workspace-governance
 cp SKILL.md .cursor/skills/workspace-governance/
 ```
 
-### Other Agents
+### 2) Project-level adaptation (optional but recommended)
 
-Place `SKILL.md` wherever your agent reads skill/rule files. The content is platform-agnostic — it uses standard shell commands (`mv`, `rm`, `mkdir -p`, `ls`) that work on any Unix-like system.
+This repository includes `SKILL_ADAPT.yaml` for boundary, protection, batch execution, and logging preferences.  
+The skill works without it, but with it, behavior is more stable and consistent across sessions.
 
-## Recommended Interaction Intents
+### 3) Recommended trigger intents
 
 - "organize workspace"
-- "archive project <name>"
-- "create project <name>"
-- "workspace audit" / "hygiene check"
-- "cleanup with plan first"
+- "audit first, then cleanup"
+- "archive project xxx"
+- "create project yyy with boundaries"
 
-The exact implementation should depend on local system constraints, not a fixed path recipe.
+## Suggested Directories
 
-## Safety Baseline
+Beyond `SKILL.md`, you can optionally maintain:
 
-- Dry-run plan before destructive actions.
-- Explicit user confirmation for delete and bulk move.
-- Never touch version-control metadata and sensitive credentials by default.
-- Never overwrite on name collision.
-- Keep operation summaries for traceability.
+- `reference/`: manuals, process notes, strategy examples
+- `assets/`: diagrams, screenshots, and visual resources
+- `scripts/`: helper scripts for checks, batch operations, exports
+- `tools/`: tool configs and integration notes
 
-## Governance Plan Template
+## Detailed Docs
 
-Before execution, the agent should provide a plan table:
-
-| Item | Current | Proposed Action | Target | Risk | Reason |
-|------|---------|-----------------|--------|------|--------|
-| example.tmp | root | delete | — | medium | temporary artifact |
-| report-final.docx | root | ask-user | docs or archive | low | destination ambiguous |
-
-## Notes
-
-- This repository intentionally avoids prescribing one universal directory tree.
-- If you need strict standardization, define it explicitly through `SKILL_ADAPT` or project rules.
-- Default behavior should remain conservative and reversible.
+- English governance manual (detailed): `reference/Governance-Manual.md`
+- Chinese governance manual (detailed): `reference/治理手册.zh-CN.md`
 
 ## License
 
