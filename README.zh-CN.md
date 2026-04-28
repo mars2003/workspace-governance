@@ -4,7 +4,7 @@
 
 一个方法论优先的 AI Agent 工作区治理技能。
 
-适用于任何支持 skill/rule 文件的 AI 编码助手 — Claude Code、Cursor、Windsurf、AlphaEngine 等。
+适用于任何支持 skill/rule 文件的 AI 编码助手 — Claude Code、Cursor、Windsurf、OpenClaw、Hermes Agent 等。
 
 ## 为什么需要它
 
@@ -46,13 +46,6 @@ cp SKILL.md ~/.claude/skills/workspace-governance/
 # Cursor（项目级）
 mkdir -p .cursor/skills/workspace-governance
 cp SKILL.md .cursor/skills/workspace-governance/
-```
-
-### AlphaEngine
-
-```bash
-mkdir -p ~/.alphaclaw/skills/workspace-governance
-cp SKILL.md ~/.alphaclaw/skills/workspace-governance/
 ```
 
 ### 其他 Agent

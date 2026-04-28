@@ -4,7 +4,7 @@
 
 A methodology-first workspace governance skill for AI agents.
 
-Works with any AI coding agent that supports skill/rule files — Claude Code, Cursor, Windsurf, AlphaEngine, or similar.
+Works with any AI coding agent that supports skill/rule files — Claude Code, Cursor, Windsurf, OpenClaw, Hermes Agent, or similar.
 
 ## Why This Skill
 
@@ -47,13 +47,6 @@ cp SKILL.md ~/.claude/skills/workspace-governance/
 # Cursor (project-level)
 mkdir -p .cursor/skills/workspace-governance
 cp SKILL.md .cursor/skills/workspace-governance/
-```
-
-### AlphaEngine
-
-```bash
-mkdir -p ~/.alphaclaw/skills/workspace-governance
-cp SKILL.md ~/.alphaclaw/skills/workspace-governance/
 ```
 
 ### Other Agents
